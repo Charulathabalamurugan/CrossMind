@@ -44,6 +44,8 @@ from utils.symbolic_engine import SymbolicEngine
 from utils.qwen3_provider import Qwen3Provider
 from utils.langgraph_orchestrator import LangGraphOrchestrator
 from utils.visualization import networkx_to_pyvis_html, path_metrics_figure
+from utils.source_retrieval import fetch_multi_source_papers
+from utils.enterprise_ops import ObservabilityRecorder, GovernanceEngine
 
 CACHE_TTL_SECONDS = 3600
 
@@ -225,6 +227,12 @@ if "advanced_report" not in st.session_state:
     st.session_state.advanced_report = ""
 if "orchestrator_state" not in st.session_state:
     st.session_state.orchestrator_state = {}
+if "observability_summary" not in st.session_state:
+    st.session_state.observability_summary = ""
+if "review_required" not in st.session_state:
+    st.session_state.review_required = False
+if "governance_result" not in st.session_state:
+    st.session_state.governance_result = {}
 
 # Sidebar Configuration
 st.sidebar.markdown("### ⚙️ Engine Settings")
@@ -233,6 +241,10 @@ st.sidebar.markdown("### ⚙️ Engine Settings")
 gemini_key = st.sidebar.text_input("Gemini API Key", type="password", help="Needed for live relation extraction and agentic hypothesis generation.")
 qwen_key = st.sidebar.text_input("Qwen3 API Key", type="password", help="Needed for advanced Qwen3 reasoning and synthesis.")
 s2_key = st.sidebar.text_input("Semantic Scholar Key (Optional)", type="password", help="Enables higher API rate limits.")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔐 Governance")
+st.sidebar.checkbox("Enable review workflow", value=True, key="enable_review")
 
 # Neo4j Settings
 st.sidebar.markdown("---")
@@ -336,10 +348,17 @@ if run_button:
         notify("Connecting to Scientific APIs...", icon="🌐")
         update_tracker(current_stage, "running")
 
-        papers = cached_fetch_papers(search_query, top_k_papers, api_key=gemini_key)
+        recorder = ObservabilityRecorder()
+        governance = GovernanceEngine()
+        try:
+            papers = fetch_multi_source_papers(search_query, limit=top_k_papers)
+        except Exception:
+            papers = cached_fetch_papers(search_query, top_k_papers, api_key=gemini_key)
         st.session_state.papers = papers
         if not papers:
             notify("No papers retrieved. Using fallback data and offline mode.", status="error")
+
+        recorder.record("retrieval_completed", {"query": search_query, "paper_count": len(papers)})
 
         notify("Generating BGE-M3 Embeddings...", icon="🧠")
         index, embeddings = build_vector_index(papers)
@@ -418,6 +437,15 @@ if run_button:
                 "verified_facts": [],
             }
         st.session_state.orchestrator_state = orchestrator_state
+        governance_result = governance.evaluate_confidence(
+            orchestrator_state.get("confidence_score", 0.0),
+            evidence_count=len(orchestrator_state.get("verified_facts", [])),
+            sources=[p.get("source") for p in papers if p.get("source")]
+        )
+        st.session_state.governance_result = governance_result
+        st.session_state.review_required = bool(governance_result.get("review_required") and st.session_state.get("enable_review", True))
+        st.session_state.observability_summary = recorder.summary()
+        recorder.record("governance_evaluated", governance_result)
 
         if discoveries:
             selected_path = discoveries[0]
@@ -645,6 +673,19 @@ with tab_report:
                 st.markdown(f"- **Selected Pathway Refined:** `{len(orchestrator_state.get('verified_facts', []))} verified facts`")
                 if orchestrator_state.get("error_message"):
                     st.error(f"Orchestrator error: {orchestrator_state.get('error_message')}")
+
+                governance_result = st.session_state.get("governance_result", {})
+                if governance_result:
+                    st.markdown("### 🛡️ Governance Review")
+                    st.markdown(f"- **Policy:** `{governance_result.get('policy', 'research')}`")
+                    st.markdown(f"- **Risk Level:** `{governance_result.get('risk_level', 'unknown')}`")
+                    st.markdown(f"- **Review Required:** `{governance_result.get('review_required', False)}`")
+                    if governance_result.get("review_required"):
+                        st.warning("Low-confidence or low-evidence results were routed to human review.")
+
+                if st.session_state.get("observability_summary"):
+                    st.markdown("### 📈 Observability Trace")
+                    st.markdown(st.session_state.observability_summary)
     else:
         st.info("Initiate the Discovery Pipeline in the sidebar to generate Scientific Reports.")
 
