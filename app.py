@@ -46,6 +46,11 @@ from utils.langgraph_orchestrator import LangGraphOrchestrator
 from utils.visualization import networkx_to_pyvis_html, path_metrics_figure
 from utils.source_retrieval import fetch_multi_source_papers
 from utils.enterprise_ops import ObservabilityRecorder, GovernanceEngine
+from utils.enterprise_config import get_settings, get_secret
+from utils.auth_rbac import authenticate_user, user_has_role, get_default_user
+from utils.audit import AuditTrail
+from utils.observability import StructuredMetrics
+from utils.workflow_queue import BackgroundQueue
 
 CACHE_TTL_SECONDS = 3600
 
@@ -233,6 +238,35 @@ if "review_required" not in st.session_state:
     st.session_state.review_required = False
 if "governance_result" not in st.session_state:
     st.session_state.governance_result = {}
+if "auth_user" not in st.session_state:
+    st.session_state.auth_user = None
+if "audit_events" not in st.session_state:
+    st.session_state.audit_events = []
+if "metrics" not in st.session_state:
+    st.session_state.metrics = []
+
+settings = get_settings()
+audit = AuditTrail(settings.audit_log_path)
+metrics = StructuredMetrics(settings.metrics_log_path)
+queue = BackgroundQueue()
+queue.start()
+
+if settings.auth_enabled:
+    st.sidebar.markdown("### 🔐 Authentication")
+    username = st.sidebar.text_input("Username", value="researcher")
+    password = st.sidebar.text_input("Password", type="password", value="researcher123")
+    if st.sidebar.button("Sign in"):
+        user = authenticate_user(username, password, allow_demo=settings.allow_demo_auth)
+        if user:
+            st.session_state.auth_user = user
+            audit.record_event("login", {"username": username}, user=username, status="success")
+            st.success("Signed in")
+        else:
+            audit.record_event("login_failed", {"username": username}, user=username, status="failed")
+            st.error("Invalid credentials")
+
+    if st.session_state.auth_user is None:
+        st.sidebar.info("Demo authentication is enabled for local development.")
 
 # Sidebar Configuration
 st.sidebar.markdown("### ⚙️ Engine Settings")
@@ -359,6 +393,8 @@ if run_button:
             notify("No papers retrieved. Using fallback data and offline mode.", status="error")
 
         recorder.record("retrieval_completed", {"query": search_query, "paper_count": len(papers)})
+        metrics.record_metric("retrieval.paper_count", float(len(papers)), {"query": search_query})
+        audit.record_event("pipeline_started", {"query": search_query}, user=(st.session_state.auth_user or get_default_user()).get("username"), status="info")
 
         notify("Generating BGE-M3 Embeddings...", icon="🧠")
         index, embeddings = build_vector_index(papers)
@@ -446,6 +482,9 @@ if run_button:
         st.session_state.review_required = bool(governance_result.get("review_required") and st.session_state.get("enable_review", True))
         st.session_state.observability_summary = recorder.summary()
         recorder.record("governance_evaluated", governance_result)
+        metrics.record_metric("pipeline.confidence", float(orchestrator_state.get("confidence_score", 0.0)), {"query": search_query})
+        st.session_state.audit_events = audit.get_recent_events(limit=10)
+        st.session_state.metrics = metrics.get_recent_metrics(limit=10)
 
         if discoveries:
             selected_path = discoveries[0]
@@ -686,6 +725,16 @@ with tab_report:
                 if st.session_state.get("observability_summary"):
                     st.markdown("### 📈 Observability Trace")
                     st.markdown(st.session_state.observability_summary)
+
+                if st.session_state.get("audit_events"):
+                    st.markdown("### 🧾 Audit Trail")
+                    for event in st.session_state.audit_events[-5:]:
+                        st.markdown(f"- {event.get('timestamp')} | {event.get('event_type')} | {event.get('status')}")
+
+                if st.session_state.get("metrics"):
+                    st.markdown("### 📊 Metrics")
+                    for metric in st.session_state.metrics[-5:]:
+                        st.markdown(f"- {metric.get('name')} = {metric.get('value')}")
     else:
         st.info("Initiate the Discovery Pipeline in the sidebar to generate Scientific Reports.")
 

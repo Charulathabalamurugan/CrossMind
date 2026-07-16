@@ -1,0 +1,19 @@
+# Literature Synthesis: Customer Road to Intelligent Machines (Baseline GraphRAG)
+
+This literature synthesis reviews the retrieved publications related to the query: **"customer road to intelligent machines"**.
+
+## Summary of Retrieved Papers
+- **Mapping the Customer Friction points in the Transition to Intelligent Industrial Automation** (2023) by J. R. Henderson, M. L. Zhou
+- **Explainable AI (XAI) Interfaces for Complex Autonomous System Monitoring** (2024) by Sarah Connor, Miles Dyson
+- **Architectures of Next-Generation Intelligent Machines: Integrating Neural Controllers and Explainability** (2025) by Alan Turing, Richard Feynman
+- **A Survey of Human-Robot Trust Dynamics in Automated Warehousing** (2022) by Grace Hopper, Donald Knuth
+- **Reducing User Cognitive Load in Reinforcement Learning Control Systems** (2024) by Claude Shannon, John von Neumann
+
+## Synthesis of Key Findings
+The retrieved literature outlines a clear trend in automation:
+1. **Operator Challenges**: Traditional industrial automation creates significant mental overhead. Operators are forced to monitor complex numerical control readouts which leads to user error under stress.
+2. **System Predictability**: The transition to intelligent machines depends on user trust. Studies indicate that predictable robotic actions are highly correlated with deployment success rates.
+3. **Explainable Methods**: Explainable AI frameworks offer solutions to operator friction by providing text explanations. These methods act as diagnostic tools in automated control environments.
+
+## Conclusion
+The papers agree that bridging interfaces are valuable. However, the papers are treated as isolated publications, and no unified interdisciplinary hypothesis connecting safety controller constraints to user trust has been programmatically discovered in this baseline analysis.

@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  crossmind:
+    build: .
+    container_name: crossmind-app
+    ports:
+      - "8501:8501"
+    environment:
+      CROSSMIND_APP_ENV: production
+      CROSSMIND_AUTH_ENABLED: "true"
+      CROSSMIND_ALLOW_DEMO_AUTH: "true"
+      CROSSMIND_SECRET_KEY: change-me
+    restart: unless-stopped

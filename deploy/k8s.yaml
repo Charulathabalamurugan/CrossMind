@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crossmind
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crossmind
+  template:
+    metadata:
+      labels:
+        app: crossmind
+    spec:
+      containers:
+        - name: crossmind
+          image: crossmind:latest
+          ports:
+            - containerPort: 8501
+          env:
+            - name: CROSSMIND_APP_ENV
+              value: production
+            - name: CROSSMIND_AUTH_ENABLED
+              value: "true"
+            - name: CROSSMIND_SECRET_KEY
+              value: change-me
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crossmind-service
+spec:
+  selector:
+    app: crossmind
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8501

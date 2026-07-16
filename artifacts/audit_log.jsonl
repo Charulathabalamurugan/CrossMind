@@ -1,0 +1,4 @@
+{"timestamp": "2026-07-14T07:45:38.201215+00:00", "event_type": "test_event", "status": "info", "details": {"ok": true}, "user": "admin"}
+{"timestamp": "2026-07-16T09:28:35.847134+00:00", "event_type": "pipeline_started", "status": "info", "details": {"query": "analyze customer road to intelligent machines"}, "user": "demo"}
+{"timestamp": "2026-07-16T09:33:26.071699+00:00", "event_type": "pipeline_started", "status": "info", "details": {"query": "analyze customer road to intelligent machines"}, "user": "demo"}
+{"timestamp": "2026-07-16T09:34:27.971670+00:00", "event_type": "pipeline_started", "status": "info", "details": {"query": "biodegradable plastics packaging marine microbes"}, "user": "demo"}

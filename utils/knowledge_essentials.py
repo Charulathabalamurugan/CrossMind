@@ -6,7 +6,10 @@ import faiss
 import sqlite3
 import json
 import time
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    SentenceTransformer = None
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 
@@ -61,19 +64,20 @@ def get_embedder():
     if _embedder_model is not None or _fallback_tfidf is not None:
         return _embedder_model or _fallback_tfidf
 
-    # Try a smaller, reliable embedding model first for faster startup.
-    for model_name in [
-        'all-MiniLM-L6-v2',
-        'BAAI/bge-small-en-v1.5',
-        'BAAI/bge-m3'
-    ]:
-        try:
-            print(f"Attempting to load {model_name}...")
-            _embedder_model = SentenceTransformer(model_name)
-            print(f"{model_name} loaded successfully.")
-            return _embedder_model
-        except Exception as e:
-            print(f"Failed to load {model_name} ({e}).")
+    if SentenceTransformer is not None:
+        # Try a smaller, reliable embedding model first for faster startup.
+        for model_name in [
+            'all-MiniLM-L6-v2',
+            'BAAI/bge-small-en-v1.5',
+            'BAAI/bge-m3'
+        ]:
+            try:
+                print(f"Attempting to load {model_name}...")
+                _embedder_model = SentenceTransformer(model_name)
+                print(f"{model_name} loaded successfully.")
+                return _embedder_model
+            except Exception as e:
+                print(f"Failed to load {model_name} ({e}).")
 
     # Fallback to Local TF-IDF (offline-safe)
     _fallback_tfidf = TFIDFEmbedder()
