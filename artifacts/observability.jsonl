@@ -4,3 +4,5 @@
 {"timestamp": "2026-07-16T09:33:44.756022+00:00", "event_type": "governance_evaluated", "details": {"policy": "research", "confidence": 0.3, "evidence_count": 3, "source_count": 1, "review_required": true, "risk_level": "high"}, "metadata": {}}
 {"timestamp": "2026-07-16T09:34:27.965473+00:00", "event_type": "retrieval_completed", "details": {"query": "biodegradable plastics packaging marine microbes", "paper_count": 25}, "metadata": {}}
 {"timestamp": "2026-07-16T09:34:48.041345+00:00", "event_type": "governance_evaluated", "details": {"policy": "research", "confidence": 0.3, "evidence_count": 3, "source_count": 1, "review_required": true, "risk_level": "high"}, "metadata": {}}
+{"timestamp": "2026-07-17T07:34:25.348238+00:00", "event_type": "retrieval_completed", "details": {"query": "analyze customer road to intelligent machines", "paper_count": 45}, "metadata": {}}
+{"timestamp": "2026-07-17T07:34:58.291932+00:00", "event_type": "governance_evaluated", "details": {"policy": "research", "confidence": 0.3, "evidence_count": 3, "source_count": 1, "review_required": true, "risk_level": "high"}, "metadata": {}}

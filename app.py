@@ -305,7 +305,7 @@ if selected_preset == "Custom Query":
 else:
     search_query = selected_preset
 
-top_k_papers = st.sidebar.slider("Papers to Ingest", min_value=5, max_value=25, value=10, step=5)
+top_k_papers = st.sidebar.slider("Papers to Ingest", min_value=5, max_value=100, value=15, step=5)
 
 run_button = st.sidebar.button("🧠 Initiate Discovery Pipeline", use_container_width=True)
 
